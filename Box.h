@@ -10,12 +10,14 @@ class Ball;
 class Box
 {
 	private:
-		Ball** ballList;
+		double boxHeight; // height of Box
+		double boxWidth; // width of Box
+		
+		Ball** ballList; // list of all the balls
 		int nBalls; // number of Balls in Box -- currently
 		int ballCapacity; // max number of Balls -- cannot be changed
-		
-		double boxHeight;
-		double boxWidth;
+
+		int stepCount; // counts the how many simulation steps occured
 	public:
 
 
@@ -43,7 +45,8 @@ class Box
 		}
 
 		void addBall(Ball* ball);
-		int drawBox (int height);
+
+		int step(double time = 0.5);
 };
 
 

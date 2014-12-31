@@ -14,7 +14,7 @@
 #define BLOBNUMBER 2
 
 int drawBlob (int x, int y);// drawBlob - draws the blob in the console
-int drawBox (Box* box, int stepNo); 
+int drawBox (Box* box, int stepNo = 0); 
 
 
 int main()
@@ -27,11 +27,12 @@ int main()
 	
 	Box *box = new Box(HEIGHT, WIDTH, BLOBNUMBER);
 	
-	Ball *blob1 = new Ball(blobx, bloby, blobvx, blobvy, RADIUS);
-	Ball *blob2 = new Ball (10,20,1,1);
+	Ball *blob1 = new Ball(40, 20, -1.0, 0.0, RADIUS);
+	Ball *blob2 = new Ball (10,20,0,0.0);
 
 	box->addBall(blob1);
 	box->addBall(blob2);
+	
 	//Ncurses initiation
 	initscr();
 
@@ -43,48 +44,12 @@ int main()
 		blobx += TIME * blobvx;
 		bloby += TIME * blobvy;
 
-		blob1->step(TIME);
+//		blob1->step(TIME);
 		
-		stepNo++;
+		stepNo = box->step(TIME);
 
-		//checking boundaries;
-
-		if ( (int) blob1->x >  box->getWidth() - blob1->radius )
-		{
-			blob1->x = (box->getWidth() - blob1->radius) - (blob1->x - (box->getWidth() - blob1->radius));
-			blob1->vx = -blob1->vx;
-		}
-
-		if ( (int) blob1->x < blob1->radius)
-		{
-			blob1->x = blob1->radius + (blob1->radius - blob1->x);
-			blob1->vx = -blob1->vx;
-		}
-
-
-		if ( (int) blob1->y >= box->getHeight() - blob1->radius)
-		{
-			blob1->y = (box->getHeight() - blob1->radius) - (blob1->y - (box->getHeight() - blob1->radius));
-			blob1->vy = -blob1->vy;
-		}
-		
-		if ( (int) blob1->y < blob1->radius )
-		{
-			blob1->y = blob1->radius + (blob1->radius -blob1->y);
-			blob1->vy = -blob1->vy;
-		}
-		
-
-
-	
-///		clear();	
-
-		
 		drawBox(box,stepNo);
 		
-//		refresh();
-		//printf("I like this: %d", stepNo);		
-//		drawBox(blob1, stepNo);
 
 	/*		
 		printf("\nblobx: %g, bloby: %g\n",blob1->x, blob1->y);	
@@ -96,7 +61,8 @@ int main()
 		}
 	*/
 	}
-
+	
+	// Ncurses close
 	endwin();
 
 	return 0;
@@ -110,8 +76,9 @@ int main()
 int drawBlob(int x, int y)
 {
 	Ball *ball = new Ball (x, y, 0., 0.);
-
-	return 0;//drawBox(ball);
+	Box *box = new Box(HEIGHT, WIDTH);
+	box->addBall(ball);
+	return drawBox(box);
 }
 
 // drawBox draws the blobs on the consoles

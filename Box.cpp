@@ -11,7 +11,7 @@ Box::Box (double h, double w, int ballCap /* = 1*/)
 	ballList = new Ball*[ballCap];
 	ballCapacity  = ballCap;
 	nBalls = 0;
-
+	stepCount = 0;
 
 	boxHeight = h;
 	boxWidth = w;
@@ -34,55 +34,117 @@ void Box::addBall (Ball* ball)
 	}
 }
 
-
-
-int Box::drawBox(int height)
+//step performs one step in the simulation.
+// First I assume the balls didn't hit anything and advance them accordingly and then I check if they actually hit something
+// and adjust them accordingly
+//
+int Box::step(double time)
 {
-	bool flag;
+	Ball *ball;
 
-	int ballsDrawn = 0;
-
-	clear();
-
-	for (int j = 0; j < boxWidth + 2; j++)
-		printw("X");
-
-	printw("\n");
-
-
-	for (int i = 0; i < boxHeight; i++)
+	Ball *ball1, *ball2;
+	
+	// Moving balls forward
+	for (int i = 0; i < nBalls; i++)
 	{
-		printw("X");
-		for (int j = 0; j < boxWidth; j++)
+		(ballList[i])->step(time);
+	}	
+
+	// Checking wheter any balls are too close to the walls
+	// TODO implement Rewind Time methodology
+	for (int i = 0; i < nBalls; i++)
+	{
+		ball = ballList[i];
+
+
+		if ( (int) ball->x >  this->getWidth() - ball->radius )
 		{
-			
-			
-			for ( int r = 0; r < nBalls; r++)
+			ball->x = (this->getWidth() - ball->radius) - (ball->x - (this->getWidth() - ball->radius));
+			ball->vx = -ball->vx;
+		}
+
+		if ( (int) ball->x < ball->radius)
+		{
+			ball->x = ball->radius + (ball->radius - ball->x);
+			ball->vx = -ball->vx;
+		}
+
+
+		if ( (int) ball->y >= this->getHeight() - ball->radius)
+		{
+			ball->y = (this->getHeight() - ball->radius) - (ball->y - (this->getHeight() - ball->radius));
+			ball->vy = -ball->vy;
+		}
+		
+		if ( (int) ball->y < ball->radius )
+		{
+			ball->y = ball->radius + (ball->radius -ball->y);
+			ball->vy = -ball->vy;
+		}	
+	}
+
+	// Checking whether 2 balls hit each other
+	// TODO what if the hit each other close to the border? Does the order matter? (It might)
+	
+	for (int i = 0; i < nBalls; i++)
+	{
+		for (int j = 0; j < nBalls; j++)
+		{
+			if ( j != i)
 			{
-				flag = false;
-
-				if ( (floor((ballList[r])->x) == j) && (floor((ballList[r])->y) == height - i - 1))
-
+				ball1 = ballList[i];
+				ball2 = ballList[j];
+				
+				// Detecting collision
+				// (x1 - x2) ^ 2 + (y1 - y2) ^ 2 < (radius1 + radius2)  ^ 2
+				if ( pow(ball1->x - ball2->x, 2) + pow(ball1->y - ball2->y,2) < pow(ball1->radius + ball2->radius,2) )
 				{
-					printw("O");
-					ballsDrawn++;
-					r = nBalls;
-					flag = true; // checking off, that we actually placed the blob here, debug...
+					// Adjusting to calculate ball deflection
+
+					// First calculating the time when the hit took place, 
+					const long double drx = ball1->x - ball2->x;
+					const long double dry = ball1->y - ball2->y;
+					const long double dvx = ball1->vx - ball2->vx;
+					const long double dvy = ball2->vy - ball2->vy;
+					const long double radSum = ball1->radius + ball2->radius;
+					
+					// Creating a parameters for a quadratic equations
+					// a * t^2 + b* t + c = 0
+					const long double a = (dvx * dvx) + (dvy * dvy);
+					const long double b = 2. * ((dvx * drx) + (dvy * dry));
+					const long double c = (drx * drx) + (dry * dry) - (radSum * radSum);
+
+					const long double delta = (b * b) - 4 * a * c;
+
+					const double time1 = 0.5 *  (-(b * b) / a + sqrt(delta / (a * a)));
+					const double time2 = 0.5 *  (-(b * b) / a - sqrt(delta / (a * a)));
+						
+			       		// We are looking for the negative time
+					double rewindTime;
+
+					if (time1 < 0)
+						rewindTime = time1;
+					else 
+						rewindTime = time2;
+					
+					// Rewinding simulation time to the time of the hit.
+					ball1->step(rewindTime);
+					ball2->step(rewindTime);
+
+					// Calculating ball deflection velocities
+
+					// Changing velocities to the frame of reference cennected with ball2 (it stops moving).`
 				}
 			}
-			
-			if (flag == false)
-				printw(" ");
 
 		}
-		printw("X\n");
+
+
 	}
 
 
-	for (int j = 0; j < boxWidth + 2; j++)
-		printw("X");
-	refresh();
+	stepCount++;
 
-	return ballsDrawn;
+	return stepCount;
 }
 
