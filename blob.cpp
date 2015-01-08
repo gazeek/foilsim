@@ -27,8 +27,8 @@ int main()
 	
 	Box *box = new Box(HEIGHT, WIDTH, BLOBNUMBER);
 	
-	Ball *blob1 = new Ball(40, 20, -1.0, 0.0, RADIUS);
-	Ball *blob2 = new Ball (10,20,0,0.0);
+	Ball *blob1 = new Ball (30, 20, 0.5, 0.0, RADIUS);
+	Ball *blob2 = new Ball (42, 20, -0.5, 0.0);
 
 	box->addBall(blob1);
 	box->addBall(blob2);
@@ -50,6 +50,7 @@ int main()
 
 		drawBox(box,stepNo);
 		
+	//	getchar();
 
 	/*		
 		printf("\nblobx: %g, bloby: %g\n",blob1->x, blob1->y);	
@@ -134,8 +135,16 @@ int drawBox (Box* box, int stepNo)
 	
 	printw("\n Step Number: %d", stepNo);
 
+	// Debug
+	for (int i = 0; i < box->ballCount(); i++)
+	{
+		printw("\nBall no %d: x = %f, y = %f, ", i + 1, ballList[i]->x, ballList[i]->y);
+		printw("vx = %f, vy = %f", ballList[i]->vx, ballList[i]->vy);
+		printw(", rad = %f", ballList[i]->radius);
+	}
 	printw("\n I like it");
 	
+	printw("\nRewind Time = %f", box->rewindTime);	
 	// nCurses refresh.
 	refresh();
 		
