@@ -47,6 +47,9 @@ class Box
 		void addBall(Ball* ball);
 
 		int step(double time = 0.5);
+
+		// Debug:
+		double rewindTime;
 };
 
 

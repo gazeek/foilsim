@@ -102,25 +102,26 @@ int Box::step(double time)
 					// Adjusting to calculate ball deflection
 
 					// First calculating the time when the hit took place, 
-					const long double drx = ball1->x - ball2->x;
-					const long double dry = ball1->y - ball2->y;
-					const long double dvx = ball1->vx - ball2->vx;
-					const long double dvy = ball2->vy - ball2->vy;
-					const long double radSum = ball1->radius + ball2->radius;
+					const double drx = ball1->x - ball2->x;
+					const double dry = ball1->y - ball2->y;
+					const double dvx = ball1->vx - ball2->vx;
+					const double dvy = ball2->vy - ball2->vy;
+					const double radSum = ball1->radius + ball2->radius;
 					
 					// Creating a parameters for a quadratic equations
 					// a * t^2 + b* t + c = 0
-					const long double a = (dvx * dvx) + (dvy * dvy);
-					const long double b = 2. * ((dvx * drx) + (dvy * dry));
-					const long double c = (drx * drx) + (dry * dry) - (radSum * radSum);
+					// TODO High Priority, make sure the solution is good, ie a != 0, dela > 0.
+					const double a = (dvx * dvx) + (dvy * dvy);
+					const double b = 2. * ((dvx * drx) + (dvy * dry));
+					const double c = (drx * drx) + (dry * dry) - (radSum * radSum);
 
-					const long double delta = (b * b) - 4 * a * c;
+					const double delta = (b * b) - 4 * a * c;
 
-					const double time1 = 0.5 *  (-(b * b) / a + sqrt(delta / (a * a)));
-					const double time2 = 0.5 *  (-(b * b) / a - sqrt(delta / (a * a)));
+					const double time1 = 0.5 *  ( -b / a + sqrt(delta / (a * a)));
+					const double time2 = 0.5 *  ( -b / a - sqrt(delta / (a * a)));
 						
 			       		// We are looking for the negative time
-					double rewindTime;
+					//double rewindTime;
 
 					if (time1 < 0)
 						rewindTime = time1;
@@ -130,10 +131,41 @@ int Box::step(double time)
 					// Rewinding simulation time to the time of the hit.
 					ball1->step(rewindTime);
 					ball2->step(rewindTime);
-
+					
 					// Calculating ball deflection velocities
-
 					// Changing velocities to the frame of reference cennected with ball2 (it stops moving).`
+					// We create 2 new velocities associated with ball2 frame of reference.
+					// Therefroe u2 == 0, u1 is the speed of ball1 in ball2 reference frame.
+					const double u1x = ball1->vx - ball2->vx;
+					const double u1y = ball1->vy - ball2->vy;
+					
+					// position2 - position1 is the vector direction that ball2 will 
+					// travel on in the reference frame associated with ball2
+					// |u2p| = |u1| * (cos (phi) * cos (alpha) + sin (phi) * sin (aplha))
+					// |u2p| = cos (phi) * u1x + sin (phi) * u1y
+					const double dp2p1x = ball2->x - ball1->x;
+					const double dp2p1y = ball2->y - ball1->y;
+					
+					// cos (phi) = dp2p1x / radSum
+					// sin (phi) = dp2p1y / radSum
+					const double u2px = dp2p1x / radSum * (dp2p1x / radSum * u1x + dp2p1y / radSum * u1y);
+					const double u2py = dp2p1y / radSum * (dp2p1x / radSum * u1x + dp2p1y / radSum * u1y);
+					
+					// Masses are equal so:
+					// u1p + u2p = u1
+				       	const double u1px = u1x - u2px;
+					const double u1py = u1y - u2py;
+
+					// Adjusting to original frame of reference
+					ball1->vx = u1px + ball2->vx;
+					ball1->vy = u1py + ball2->vy;
+
+					ball2->vx = u2px + ball2->vx;
+					ball2->vy = u2py + ball2->vy;
+
+					// Moving time forward
+					ball1->step( -rewindTime);
+					ball2->step( -rewindTime);
 				}
 			}
 
