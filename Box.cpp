@@ -4,7 +4,7 @@
 #include <cmath>
 
 #include "Box.h"
-
+#include "Misc.h"
 
 Box::Box (double h, double w, int ballCap /* = 1*/)
 {
@@ -84,7 +84,7 @@ int Box::step(double time)
 	}
 
 	// Checking whether 2 balls hit each other
-	// TODO what if the hit each other close to the border? Does the order matter? (It might)
+	// TODO what if the hit each other close5 to the border? Does the order matter? (It might)
 	
 	for (int i = 0; i < nBalls; i++)
 	{
@@ -102,23 +102,23 @@ int Box::step(double time)
 					// Adjusting to calculate ball deflection
 
 					// First calculating the time when the hit took place, 
-					const double drx = ball1->x - ball2->x;
-					const double dry = ball1->y - ball2->y;
-					const double dvx = ball1->vx - ball2->vx;
-					const double dvy = ball2->vy - ball2->vy;
-					const double radSum = ball1->radius + ball2->radius;
+					double drx = ball1->x - ball2->x;
+					double dry = ball1->y - ball2->y;
+					double dvx = ball1->vx - ball2->vx;
+					double dvy = ball2->vy - ball2->vy;
+					double radSum = ball1->radius + ball2->radius;
 					
 					// Creating a parameters for a quadratic equations
 					// a * t^2 + b* t + c = 0
 					// TODO High Priority, make sure the solution is good, ie a != 0, dela > 0.
-					const double a = (dvx * dvx) + (dvy * dvy);
-					const double b = 2. * ((dvx * drx) + (dvy * dry));
-					const double c = (drx * drx) + (dry * dry) - (radSum * radSum);
+					double a = (dvx * dvx) + (dvy * dvy);
+					double b = 2. * ((dvx * drx) + (dvy * dry));
+					double c = (drx * drx) + (dry * dry) - (radSum * radSum);
 
-					const double delta = (b * b) - 4 * a * c;
+					double delta = (b * b) - 4 * a * c;
 
-					const double time1 = 0.5 *  ( -b / a + sqrt(delta / (a * a)));
-					const double time2 = 0.5 *  ( -b / a - sqrt(delta / (a * a)));
+					double time1 = 0.5 *  ( -b / a + sqrt(delta / (a * a)));
+					double time2 = 0.5 *  ( -b / a - sqrt(delta / (a * a)));
 						
 			       		// We are looking for the negative time
 					//double rewindTime;
@@ -136,26 +136,26 @@ int Box::step(double time)
 					// Changing velocities to the frame of reference cennected with ball2 (it stops moving).`
 					// We create 2 new velocities associated with ball2 frame of reference.
 					// Therefroe u2 == 0, u1 is the speed of ball1 in ball2 reference frame.
-					const double u1x = ball1->vx - ball2->vx;
-					const double u1y = ball1->vy - ball2->vy;
+					double u1x = ball1->vx - ball2->vx;
+					double u1y = ball1->vy - ball2->vy;
 					
 					// position2 - position1 is the vector direction that ball2 will 
 					// travel on in the reference frame associated with ball2
 					// |u2p| = |u1| * (cos (phi) * cos (alpha) + sin (phi) * sin (aplha))
 					// |u2p| = cos (phi) * u1x + sin (phi) * u1y
-					const double dp2p1x = ball2->x - ball1->x;
-					const double dp2p1y = ball2->y - ball1->y;
+					double dp2p1x = ball2->x - ball1->x;
+					double dp2p1y = ball2->y - ball1->y;
 					
 					// cos (phi) = dp2p1x / radSum
 					// sin (phi) = dp2p1y / radSum
-					const double u2px = dp2p1x / radSum * (dp2p1x / radSum * u1x + dp2p1y / radSum * u1y);
-					const double u2py = dp2p1y / radSum * (dp2p1x / radSum * u1x + dp2p1y / radSum * u1y);
+					double u2px = dp2p1x / radSum * (dp2p1x / radSum * u1x + dp2p1y / radSum * u1y);
+					double u2py = dp2p1y / radSum * (dp2p1x / radSum * u1x + dp2p1y / radSum * u1y);
 					
 					// Masses are equal so:
 					// u1p + u2p = u1
-				       	const double u1px = u1x - u2px;
-					const double u1py = u1y - u2py;
-
+				       	double u1px = u1x - u2px;
+					double u1py = u1y - u2py;
+					 
 					// Adjusting to original frame of reference
 					ball1->vx = u1px + ball2->vx;
 					ball1->vy = u1py + ball2->vy;
@@ -180,3 +180,129 @@ int Box::step(double time)
 	return stepCount;
 }
 
+
+// double timeOfBallHit (Ball ball1, Ball ball2) gives the time when ball1 will hit with ball2.
+
+double Box::timeOfBallHit(Ball *ball1, Ball *ball2)
+{
+	double timeOfHit;
+	
+	// First calculating the time when the hit took place, 
+	double drx = ball1->x - ball2->x;
+	double dry = ball1->y - ball2->y;
+	double dvx = ball1->vx - ball2->vx;
+	double dvy = ball2->vy - ball2->vy;
+	double radSum = ball1->radius + ball2->radius;
+			
+	// Creating a parameters for a quadratic equations
+	// a * t^2 + b* t + c = 0
+	// TODO High Priority, make sure the solution is good, ie a != 0, dela > 0.
+	double a = (dvx * dvx) + (dvy * dvy);
+	double b = 2. * ((dvx * drx) + (dvy * dry));
+	double c = (drx * drx) + (dry * dry) - (radSum * radSum);
+
+	double delta = (b * b) - 4 * a * c;
+
+	double time1 = 0.5 *  ( -b / a + sqrt(delta / (a * a)));
+	double time2 = 0.5 *  ( -b / a - sqrt(delta / (a * a)));
+		
+      	// We are looking for when we will hit the second ball.
+	// If we won't do that in the future timeOfHit = -1;
+	timeOfHit = nonNegativeMin(time1, time2);
+
+	if (timeOfHit == 0)
+	{
+		// If one time is negative, the hit happened in the past, 
+		// If both are 0, the balls are tangent
+		if( (time1 == 0 && time2 <= 0) || (time1 <= 0 && time2 == 0) )
+			timeOfHit = -1.0;
+		// Otherwise the hit is happening right now, so since timeOfHit == 0
+		// we got the right answer.
+
+	}
+
+	return timeOfHit;
+	/*
+	// Rewinding simulation time to the time of the hit.
+	ball1->step(rewindTime);
+	ball2->step(rewindTime);
+	
+	// Calculating ball deflection velocities
+	// Changing velocities to the frame of reference cennected with ball2 (it stops moving).`
+	// We create 2 new velocities associated with ball2 frame of reference.
+	// Therefroe u2 == 0, u1 is the speed of ball1 in ball2 reference frame.
+	double u1x = ball1->vx - ball2->vx;
+	double u1y = ball1->vy - ball2->vy;
+	
+	// position2 - position1 is the vector direction that ball2 will 
+	// travel on in the reference frame associated with ball2
+	// |u2p| = |u1| * (cos (phi) * cos (alpha) + sin (phi) * sin (aplha))
+	// |u2p| = cos (phi) * u1x + sin (phi) * u1y
+	double dp2p1x = ball2->x - ball1->x;
+	double dp2p1y = ball2->y - ball1->y;
+	
+	// cos (phi) = dp2p1x / radSum
+	// sin (phi) = dp2p1y / radSum
+	double u2px = dp2p1x / radSum * (dp2p1x / radSum * u1x + dp2p1y / radSum * u1y);
+	double u2py = dp2p1y / radSum * (dp2p1x / radSum * u1x + dp2p1y / radSum * u1y);
+	
+	// Masses are equal so:
+	// u1p + u2p = u1
+       	double u1px = u1x - u2px;
+	double u1py = u1y - u2py;
+	 
+	// Adjusting to original frame of reference
+	ball1->vx = u1px + ball2->vx;
+	ball1->vy = u1py + ball2->vy;
+
+	ball2->vx = u2px + ball2->vx;
+	ball2->vy = u2py + ball2->vy;
+
+	// Moving time forward
+	ball1->step( -rewindTime);
+	ball2->step( -rewindTime);
+	*/
+		
+}	
+
+// Returns the time of the first time a ball hits a wall
+// Returns 0 if it is hittting the wall right now, that is it's distance is zero and it is moving towards it.
+// Returns -1 if it will never hit a wall, most likely an error occured.
+
+double Box::timeOfWallHit(Ball *ball)
+{
+	double timeOfHit;
+
+
+	// Checking when ball will hit a wall
+	
+	// Looking for the minimum time 
+	
+	// Checking which wall ball will hit in this order:
+	//
+	//    3_
+	//   |  |
+	// 4 |__|2
+	//    1
+	//
+	
+	double tempTime1 = (ball->y - ball->radius) / ball->vy;
+	double tempTime2 = (this->getWidth() - ball->radius - ball->x) / ball->vx;
+	double tempTime3 = (this->getHeight() - ball->radius - ball->y) / ball->vy;
+	double tempTime4 = (ball->x - ball->radius) / ball->vx;
+	
+	// Checking whether the ball is against a wall and is going towards that wall. 
+	// If yes, the ball is hitting the wall, timeOfHit = 0;
+	if ( (tempTime1 == 0 && ball->vy < 0) /
+		(tempTime2 == 0 && ball->vx > 0) /
+		(tempTime3 == 0 && ball->vy >0) /
+		(tempTime4 == 0 && ball->vx < 0) ) timeOfHit = 0;
+	else // It is not against a wall and moving towards it.
+	{
+		timeOfHit = positiveMin(tempTime1, tempTime2);
+		timeOfHit = positiveMin(timeOfHit, tempTime3);
+		timeOfHit = positiveMin(timeOfHit, tempTime4);
+		
+	}
+	return timeOfHit;	
+}

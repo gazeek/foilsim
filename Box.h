@@ -18,6 +18,10 @@ class Box
 		int ballCapacity; // max number of Balls -- cannot be changed
 
 		int stepCount; // counts the how many simulation steps occured
+		
+		double timeOfWallHit(Ball *ball);
+		double timeOfBallHit(Ball *ball1, Ball *ball2); 
+
 	public:
 
 
